@@ -9,6 +9,7 @@ namespace PythonNetStubGenerator
     public static class StaticStubBuilder
     {
         private static HashSet<DirectoryInfo> SearchPaths { get; } = new HashSet<DirectoryInfo>();
+        private static HashSet<string> TargetAssemblyNames { get; } = new HashSet<string>();
 
         public static DirectoryInfo BuildAssemblyStubs(DirectoryInfo destPath, FileInfo[] targetAssemblyPaths, DirectoryInfo[] searchPaths = null)
         {
@@ -21,6 +22,9 @@ namespace PythonNetStubGenerator
             {
                 var assemblyToStub = Assembly.LoadFrom(targetAssemblyPath.FullName);
                 SearchPaths.Add(targetAssemblyPath.Directory);
+                
+                // Track this as a target assembly
+                TargetAssemblyNames.Add(assemblyToStub.GetName().Name);
 
                 if (searchPaths != null)
                     foreach (var path in SearchPaths)
@@ -63,8 +67,24 @@ namespace PythonNetStubGenerator
                 if (nameSpace == "")
                     break;
 
+                // Skip null or empty namespaces
+                if (string.IsNullOrEmpty(nameSpace))
+                {
+                    Console.WriteLine($"Skipping null/empty namespace");
+                    continue;
+                }
+
+                // Only generate stubs for types from target assemblies
+                var typesFromTargetAssemblies = types.Where(t => TargetAssemblyNames.Contains(t.Assembly.GetName().Name)).ToList();
+                
+                if (typesFromTargetAssemblies.Count == 0)
+                {
+                    Console.WriteLine($"Skipping namespace {nameSpace} (no types from target assemblies)");
+                    continue;
+                }
+
                 // generate stubs for each type
-                WriteStub(destPath, nameSpace, types);
+                WriteStub(destPath, nameSpace, typesFromTargetAssemblies);
             }
 
 
