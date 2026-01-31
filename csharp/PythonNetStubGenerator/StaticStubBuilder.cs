@@ -67,6 +67,8 @@ namespace PythonNetStubGenerator
                 if (nameSpace == "")
                     break;
                 
+                if ( nameSpace == null) continue;
+                
                 List<Type> typesToGenerate;
                 if (onlyTargetTypes)
                 {
