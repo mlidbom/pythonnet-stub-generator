@@ -273,7 +273,40 @@ namespace PythonNetStubGenerator
 
         private static bool WriteIndexers(StringBuilder sb, Type type)
         {
-            return false;
+            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+                .Where(p => p.GetIndexParameters().Length > 0)
+                .ToArray();
+
+            foreach (var property in properties)
+            {
+                var indexParams = property.GetIndexParameters();
+                if (indexParams.Length == 0) continue;
+
+                var isStatic = property.GetAccessors(true)[0].IsStatic;
+                var firstParam = isStatic ? "cls" : "self";
+
+                // Generate parameter list for the indexer
+                var paramList = string.Join(", ", indexParams.Select(p => $"{p.Name}: {p.ParameterType.ToPythonType()}"));
+                var propType = property.PropertyType.ToPythonType();
+
+                // Generate __getitem__ if readable
+                if (property.CanRead)
+                {
+                    if (isStatic)
+                        sb.Indent().AppendLine("@classmethod");
+                    sb.Indent().AppendLine($"def __getitem__({firstParam}, {paramList}) -> {propType}: ...");
+                }
+
+                // Generate __setitem__ if writable
+                if (property.CanWrite)
+                {
+                    if (isStatic)
+                        sb.Indent().AppendLine("@classmethod");
+                    sb.Indent().AppendLine($"def __setitem__({firstParam}, {paramList}, value: {propType}) -> None: ...");
+                }
+            }
+
+            return properties.Length > 0;
         }
 
         private static bool WriteNestedTypes(StringBuilder sb, Type stubType)
@@ -571,6 +604,7 @@ namespace PythonNetStubGenerator
         private static bool WriteProperties(Type stubType, StringBuilder sb)
         {
             var properties = stubType.GetProperties(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+                .Where(p => p.GetIndexParameters().Length == 0) // Skip indexers - they're handled by WriteIndexers
                 .OrderBy(it => it.Name)
                 .ToArray();
 
