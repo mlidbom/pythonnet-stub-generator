@@ -10,25 +10,31 @@ namespace PythonNetStubGenerator
     {
         public int Compare(MethodInfo a, MethodInfo b)
         {
-            if (a == null && b == null) return 0;
-            if (a == null) return 1;
-            if (b == null) return -1;
+            if (a == null && b == null)
+                return 0;
+            if (a == null)
+                return 1;
+            if (b == null)
+                return -1;
 
             var aName = a.NonGenericName();
             var bName = b.NonGenericName();
-            
+
             var nameCompare = string.Compare(aName, bName, StringComparison.InvariantCulture);
-            if (nameCompare != 0) return nameCompare;
+            if (nameCompare != 0)
+                return nameCompare;
 
             var aParams = a.GetParameters();
             var bParams = b.GetParameters();
 
             var paramCompare = aParams.Length.CompareTo(bParams.Length);
-            if (paramCompare != 0) return paramCompare;
+            if (paramCompare != 0)
+                return paramCompare;
 
             float GetDepth(Type t, bool addGenerics)
             {
-                if (t == null) return 0;
+                if (t == null)
+                    return 0;
                 var baseDepth = t.GetInterfaces().Append(t.BaseType).Select(it => GetDepth(it, false)).Max() + 1;
 
                 if (addGenerics)
@@ -72,14 +78,17 @@ namespace PythonNetStubGenerator
                 var aDepth = GetDepth(aType, true);
                 var bDepth = GetDepth(bType, true);
 
-                if (aType == typeof(char) && bType == typeof(string)) continue;
-                if (aType == typeof(string) && bType == typeof(char)) continue;
+                if (aType == typeof(char) && bType == typeof(string))
+                    continue;
+                if (aType == typeof(string) && bType == typeof(char))
+                    continue;
 
                 // We invert this because we want the highest depth first
                 // This allows overloads of more defined types to appear first in the method list
                 // Allowing the type-checker to infer that type before the more general one
                 var depthCompare = -aDepth.CompareTo(bDepth);
-                if (depthCompare != 0) return depthCompare;
+                if (depthCompare != 0)
+                    return depthCompare;
             }
             return string.Compare(aParamString, bParamString, StringComparison.Ordinal);
         }

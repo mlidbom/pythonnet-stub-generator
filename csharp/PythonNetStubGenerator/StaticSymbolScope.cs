@@ -3,14 +3,14 @@ using System.Collections.Generic;
 
 namespace PythonNetStubGenerator
 {
-    public class SymbolScope : IDisposable
+    public class StaticSymbolScope : IDisposable
     {
 
         public readonly List<string> ReservedSymbols;
-        public static readonly List<SymbolScope> Scopes = new List<SymbolScope>();
+        public static readonly List<StaticSymbolScope> Scopes = new List<StaticSymbolScope>();
         public readonly string Namespace;
 
-        public SymbolScope(IEnumerable<string> reservedSymbols, string nameSpace)
+        public StaticSymbolScope(IEnumerable<string> reservedSymbols, string nameSpace)
         {
             Namespace = nameSpace;
             ReservedSymbols = new List<string>(reservedSymbols);
@@ -22,7 +22,7 @@ namespace PythonNetStubGenerator
             Scopes.Remove(this);
         }
 
-        public bool HasConflict(string cleanName, string typeNamespace) => 
+        public bool HasConflict(string cleanName, string typeNamespace) =>
             typeNamespace != Namespace && ReservedSymbols.Contains(cleanName);
     }
 }

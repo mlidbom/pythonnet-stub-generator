@@ -1,16 +1,57 @@
-﻿using PythonNetStubGenerator;
+﻿using System.CommandLine;
+using System.CommandLine.Parsing;
+using PythonNetStubGenerator;
 
 namespace PythonNetStubTool
 {
     static class Program
     {
+        static int Main(string[] args)
+        {
+            Option<DirectoryInfo> destPathOption = new("--dest-path")
+            {
+                Description = "Path to save the stubs to.",
+                Required = true
+            };
+
+            Option<string> targetDllsOption = new("--target-dlls")
+            {
+                Description = "Target DLLs.",
+                Required = true
+            };
+
+            Option<DirectoryInfo[]> searchPathsOption = new("--search-paths")
+            {
+                Description = "Path to search for referenced assemblies.",
+                Arity = ArgumentArity.OneOrMore,
+                Required = false
+            };
+
+            RootCommand rootCommand = new("PythonNet Stub Generator Tool");
+            rootCommand.Options.Add(destPathOption);
+            rootCommand.Options.Add(targetDllsOption);
+            rootCommand.Options.Add(searchPathsOption);
+
+            rootCommand.SetAction(parseResult =>
+            {
+                DirectoryInfo destPath = parseResult.GetValue(destPathOption)!;
+                string targetDlls = parseResult.GetValue(targetDllsOption)!;
+                DirectoryInfo[]? searchPaths = parseResult.GetValue(searchPathsOption);
+
+                return Run(destPath, targetDlls, searchPaths);
+            });
+
+            ParseResult parseResult = rootCommand.Parse(args);
+            return parseResult.Invoke();
+        }
+
         /// <summary>
         /// Creates stubs for Python.Net
         /// </summary>
         /// <param name="destPath">Path to save the subs to.</param>
         /// <param name="searchPaths">Path to search for referenced assemblies</param>
         /// <param name="targetDlls">Target DLLsz</param>
-        static int Main(
+        static int Run(
             DirectoryInfo destPath,
             string targetDlls,
             DirectoryInfo[]? searchPaths = null
@@ -34,12 +75,12 @@ namespace PythonNetStubTool
                 infos.Add(assemblyPath);
 
             }
-            
+
             Console.WriteLine($"building stubs...");
 
             try
             {
-                var dest = StubBuilder.BuildAssemblyStubs(destPath, infos.ToArray(), searchPaths);
+                var dest = StaticStubBuilder.BuildAssemblyStubs(destPath, infos.ToArray(), searchPaths);
                 Console.WriteLine($"stubs saved to {dest}");
                 return 0;
             }

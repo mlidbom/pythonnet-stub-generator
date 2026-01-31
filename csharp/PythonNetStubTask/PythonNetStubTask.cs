@@ -1,20 +1,30 @@
-﻿using System;
+﻿using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+using PythonNetStubGenerator;
+using System;
 using System.IO;
 using System.Linq;
-using Microsoft.Build.Framework;
-using Microsoft.Build.Utilities;
 
-namespace PythonNetStubGenerator
+namespace PythonNetStubTask
 {
-    public class PythonStubTask : Task
+    public class PythonNetStubTask : Task
     {
         [Required]
-        public string DestPath { get; set; }
+        public string DestPath
+        {
+            get; set;
+        }
 
         [Required]
-        public string[] SourceDlls { get; set; }
+        public string[] SourceDlls
+        {
+            get; set;
+        }
 
-        public string[] AdditionalSearchPaths { get; set; }
+        public string[] AdditionalSearchPaths
+        {
+            get; set;
+        }
 
         public override bool Execute()
         {
@@ -25,7 +35,7 @@ namespace PythonNetStubGenerator
             try
             {
                 Log.LogMessage(MessageImportance.High, "Generating Stubs for " + destPath.FullName);
-                StubBuilder.BuildAssemblyStubs(destPath, sourceDlls, directoryPaths);
+                StaticStubBuilder.BuildAssemblyStubs(destPath, sourceDlls, directoryPaths);
                 Log.LogMessage(MessageImportance.High, "Done");
 
             }

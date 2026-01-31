@@ -6,18 +6,33 @@ using System.Text;
 
 namespace PythonNetStubGenerator
 {
-    public class ClassScope : IDisposable
+    public class StaticClassScope : IDisposable
     {
-        private static readonly List<ClassScope> ClassScopes = new List<ClassScope>();
-        public static ClassScope Current => ClassScopes.LastOrDefault();
-        public string PythonClass { get; }
-        public Type[] Generics { get; }
-        public bool ShouldShadowGenerics { get; }
-        public string OutsideAccessor { get; }
+        private static readonly List<StaticClassScope> ClassScopes = new List<StaticClassScope>();
+        public static StaticClassScope Current => ClassScopes.LastOrDefault();
+        public string PythonClass
+        {
+            get;
+        }
+        public Type[] Generics
+        {
+            get;
+        }
+        public bool ShouldShadowGenerics
+        {
+            get;
+        }
+        public string OutsideAccessor
+        {
+            get;
+        }
 
-        private IndentScope IndentScope { get; set; }
+        private IndentScope IndentScope
+        {
+            get; set;
+        }
 
-        public ClassScope(string pythonClass, IEnumerable<Type> newGenerics, bool shouldShadowGenerics)
+        public StaticClassScope(string pythonClass, IEnumerable<Type> newGenerics, bool shouldShadowGenerics)
         {
             Generics = newGenerics.ToArray();
             ShouldShadowGenerics = shouldShadowGenerics;
@@ -36,7 +51,8 @@ namespace PythonNetStubGenerator
             var existing = ClassScopes[index];
             ClassScopes.RemoveAt(index);
             IndentScope?.Dispose();
-            if (existing != this) throw new Exception();
+            if (existing != this)
+                throw new Exception();
         }
 
         public static string ScopeAccessor =>
@@ -48,7 +64,8 @@ namespace PythonNetStubGenerator
             get
             {
                 var start = ClassScopes.FindLastIndex(it => it.ShouldShadowGenerics);
-                if (start == -1) start = 0;
+                if (start == -1)
+                    start = 0;
                 return ClassScopes.Skip(start).SelectMany(it => it.Generics);
             }
         }

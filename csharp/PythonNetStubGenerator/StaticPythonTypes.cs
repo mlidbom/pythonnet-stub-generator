@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace PythonNetStubGenerator
 {
-    public static class PythonTypes
+    public static class StaticPythonTypes
     {
         private static readonly HashSet<Type> AllExportedTypes = new HashSet<Type>();
         private static readonly HashSet<string> DirtyNamespaces = new HashSet<string>();
@@ -22,10 +22,12 @@ namespace PythonNetStubGenerator
             {
                 if (type.DeclaringType != null)
                 {
-                    if (type.IsGenericType) continue;
+                    if (type.IsGenericType)
+                        continue;
                     foreach (var siblingType in type.DeclaringType.GetNestedTypes())
                     {
-                        if (!siblingType.IsGenericType) continue;
+                        if (!siblingType.IsGenericType)
+                            continue;
                         if (siblingType.NonGenericName() == type.Name)
                         {
                             OverloadedNonGenericTypes.Add(type);
@@ -40,10 +42,12 @@ namespace PythonNetStubGenerator
                 var typesWithName = typesByName.TryGetValue(baseName, out var val2) ? val2 : typesByName[baseName] = new List<Type>();
 
                 typesWithName.Add(type);
-                if (typesWithName.Count <= 1) continue;
+                if (typesWithName.Count <= 1)
+                    continue;
                 foreach (var overloadedType in typesWithName)
                 {
-                    if (!overloadedType.IsGenericType) OverloadedNonGenericTypes.Add(overloadedType);
+                    if (!overloadedType.IsGenericType)
+                        OverloadedNonGenericTypes.Add(overloadedType);
                 }
             }
         }
@@ -51,22 +55,32 @@ namespace PythonNetStubGenerator
         public static bool IsOverloadedNonGenericType(this Type type) => OverloadedNonGenericTypes.Contains(type);
 
 
-        public static bool CurrentUsedGenericArray { get; private set; }
-        public static bool CurrentUsedBaseArray { get; private set; }
+        public static bool CurrentUsedGenericArray
+        {
+            get; private set;
+        }
+        public static bool CurrentUsedBaseArray
+        {
+            get; private set;
+        }
 
         public static void AddDependency(Type t)
         {
             var isNewAdd = AllExportedTypes.Add(t);
-            if (isNewAdd) DirtyNamespaces.Add(t.Namespace);
-            if (t != typeof(Nullable<>)) CurrentTypes.Add(t);
+            if (isNewAdd)
+                DirtyNamespaces.Add(t.Namespace);
+            if (t != typeof(Nullable<>))
+                CurrentTypes.Add(t);
         }
 
         public static void AddArrayDependency(bool isGeneric)
         {
             AddDependency(typeof(Array));
 
-            if (isGeneric) CurrentUsedGenericArray = true;
-            else CurrentUsedBaseArray = true;
+            if (isGeneric)
+                CurrentUsedGenericArray = true;
+            else
+                CurrentUsedBaseArray = true;
         }
 
         private static void AddNamespaceDependency(string typeNamespace) => CurrentNamespaces.Add(typeNamespace);
@@ -84,9 +98,11 @@ namespace PythonNetStubGenerator
 
         public static (string nameSpace, List<Type> types) RemoveDirtyNamespace()
         {
-            var key = DirtyNamespaces.FirstOrDefault();
+            if (DirtyNamespaces.Count() == 0)
+                return ("", new List<Type>());
+
+            var key = DirtyNamespaces.First();
             DirtyNamespaces.Remove(key);
-            if (key == null) return (null, new List<Type>());
             var results = AllExportedTypes.Where(it => it.Namespace == key).ToList();
             return (key, results);
         }
@@ -94,9 +110,12 @@ namespace PythonNetStubGenerator
 
         internal static string SafePythonName(string s)
         {
-            if (s == "from") return "from_";
-            if (s == "del") return "del_";
-            if (s == "None") return "None_";
+            if (s == "from")
+                return "from_";
+            if (s == "del")
+                return "del_";
+            if (s == "None")
+                return "None_";
             return s;
         }
 
@@ -110,37 +129,56 @@ namespace PythonNetStubGenerator
         public static string CleanName(this Type t)
         {
             var name = t.NonGenericName();
-            if (t.IsGenericType) name = $"{name}_{t.GetGenericArguments().Length}";
+            if (t.IsGenericType)
+                name = $"{name}_{t.GetGenericArguments().Length}";
             return name;
         }
 
         public static string CleanName(this MethodBase t)
         {
             var name = t.NonGenericName();
-            if (t.IsGenericMethod) name = $"{name}_{t.GetGenericArguments().Length}";
+            if (t.IsGenericMethod)
+                name = $"{name}_{t.GetGenericArguments().Length}";
             return name;
         }
 
 
         public static string ToPythonType(this Type t, bool withGenericParams = true)
         {
-            if (t == null || t == typeof(void)) return "None";
-            if (t == typeof(object)) return "typing.Any";
-            if (t == typeof(string)) return "str";
-            if (t == typeof(char)) return "str";
-            if (t == typeof(double)) return "float";
-            if (t == typeof(float)) return "float";
-            if (t == typeof(bool)) return "bool";
-            if (t == typeof(long)) return "int";
-            if (t == typeof(int)) return "int";
-            if (t == typeof(byte)) return "int";
-            if (t == typeof(sbyte)) return "int";
-            if (t == typeof(short)) return "int";
-            if (t == typeof(uint)) return "int";
-            if (t == typeof(ushort)) return "int";
-            if (t == typeof(ulong)) return "int";
-            if (t == typeof(IntPtr)) return "int";
-            if (t == typeof(Type)) return "typing.Type[typing.Any]";
+            if (t == null || t == typeof(void))
+                return "None";
+            if (t == typeof(object))
+                return "typing.Any";
+            if (t == typeof(string))
+                return "str";
+            if (t == typeof(char))
+                return "str";
+            if (t == typeof(double))
+                return "float";
+            if (t == typeof(float))
+                return "float";
+            if (t == typeof(bool))
+                return "bool";
+            if (t == typeof(long))
+                return "int";
+            if (t == typeof(int))
+                return "int";
+            if (t == typeof(byte))
+                return "int";
+            if (t == typeof(sbyte))
+                return "int";
+            if (t == typeof(short))
+                return "int";
+            if (t == typeof(uint))
+                return "int";
+            if (t == typeof(ushort))
+                return "int";
+            if (t == typeof(ulong))
+                return "int";
+            if (t == typeof(IntPtr))
+                return "int";
+            if (t == typeof(Type))
+                return "typing.Type[typing.Any]";
             if (t == typeof(Array))
             {
                 AddArrayDependency(false);
@@ -195,10 +233,11 @@ namespace PythonNetStubGenerator
         private static string GetScope(Type type)
         {
             var s = type.DeclaringType?.ToPythonType(false);
-            if (s != null) return $"{s}.";
+            if (s != null)
+                return $"{s}.";
 
             var cleanName = type.CleanName();
-            if (SymbolScope.Scopes.Any(it => it.HasConflict(cleanName, type.Namespace)))
+            if (StaticSymbolScope.Scopes.Any(it => it.HasConflict(cleanName, type.Namespace)))
             {
                 AddNamespaceDependency(type.Namespace);
                 return $"{type.Namespace}.";
@@ -212,27 +251,33 @@ namespace PythonNetStubGenerator
         private static List<Type> GetGenerics(Type type)
         {
             IEnumerable<Type> result = type.GetGenericArguments();
-            if (type.IsGenericType) AddDependency(type.GetGenericTypeDefinition());
+            if (type.IsGenericType)
+                AddDependency(type.GetGenericTypeDefinition());
             return result.ToList();
         }
 
         private static string GetGenericTypeParameterName(Type t)
         {
-            var currentScope = ClassScope.Current;
+            var currentScope = StaticClassScope.Current;
 
             var method = t.DeclaringMethod;
             var declType = t.DeclaringType;
 
             string basePrefix;
-            if (method != null) basePrefix = method.CleanName();
-            else if (declType != null) basePrefix = declType.CleanName();
-            else throw new Exception("Where did this type come from?");
+            if (method != null)
+                basePrefix = method.CleanName();
+            else if (declType != null)
+                basePrefix = declType.CleanName();
+            else
+                throw new Exception("Where did this type come from?");
 
             var baseName = basePrefix + "_" + t.Name;
 
             var currentClassName = currentScope?.PythonClass;
-            if (currentScope == null || currentClassName == basePrefix) return baseName;
-            if (method == null) return currentClassName + "_" + baseName;
+            if (currentScope == null || currentClassName == basePrefix)
+                return baseName;
+            if (method == null)
+                return currentClassName + "_" + baseName;
 
             return currentScope.PythonClass + "_" + baseName;
         }
@@ -241,8 +286,10 @@ namespace PythonNetStubGenerator
         {
             switch (propertyName)
             {
-                case "None": return true;
-                default: return false;
+                case "None":
+                    return true;
+                default:
+                    return false;
             }
         }
     }
