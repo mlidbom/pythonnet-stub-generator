@@ -27,18 +27,26 @@ namespace PythonNetStubTool
                 Required = false
             };
 
+            Option<bool> onlyTargetTypesOption = new("--only-target-types")
+            {
+                Description = "Only generate stubs for target assemblies (faster, excludes System.* types).",
+                Required = false
+            };
+
             RootCommand rootCommand = new("PythonNet Stub Generator Tool");
             rootCommand.Options.Add(destPathOption);
             rootCommand.Options.Add(targetDllsOption);
             rootCommand.Options.Add(searchPathsOption);
+            rootCommand.Options.Add(onlyTargetTypesOption);
 
             rootCommand.SetAction(parseResult =>
             {
                 DirectoryInfo destPath = parseResult.GetValue(destPathOption)!;
                 string targetDlls = parseResult.GetValue(targetDllsOption)!;
                 DirectoryInfo[]? searchPaths = parseResult.GetValue(searchPathsOption);
+                bool onlyTargetTypes = parseResult.GetValue(onlyTargetTypesOption);
 
-                return Run(destPath, targetDlls, searchPaths);
+                return Run(destPath, targetDlls, searchPaths, onlyTargetTypes);
             });
 
             ParseResult parseResult = rootCommand.Parse(args);
@@ -54,7 +62,8 @@ namespace PythonNetStubTool
         static int Run(
             DirectoryInfo destPath,
             string targetDlls,
-            DirectoryInfo[]? searchPaths = null
+            DirectoryInfo[]? searchPaths = null,
+            bool onlyTargetTypes = false
             )
         {
             if (searchPaths != null)
@@ -80,7 +89,7 @@ namespace PythonNetStubTool
 
             try
             {
-                var dest = StaticStubBuilder.BuildAssemblyStubs(destPath, infos.ToArray(), searchPaths);
+                var dest = StaticStubBuilder.BuildAssemblyStubs(destPath, infos.ToArray(), searchPaths, onlyTargetTypes);
                 Console.WriteLine($"stubs saved to {dest}");
                 return 0;
             }
