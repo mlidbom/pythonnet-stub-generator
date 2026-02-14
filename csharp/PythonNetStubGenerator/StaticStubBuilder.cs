@@ -17,18 +17,22 @@ namespace PythonNetStubGenerator
             AppDomain.CurrentDomain.AssemblyResolve -= AssemblyResolve;
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolve;
 
+            // Register all search paths upfront so assembly resolution works
+            // regardless of the order target DLLs are processed.
+            foreach (var targetAssemblyPath in targetAssemblyPaths)
+                SearchPaths.Add(targetAssemblyPath.Directory);
+
+            if (searchPaths != null)
+                foreach (var path in searchPaths)
+                    SearchPaths.Add(path);
+
             // pick a dll and load
             foreach (var targetAssemblyPath in targetAssemblyPaths)
             {
                 var assemblyToStub = Assembly.LoadFrom(targetAssemblyPath.FullName);
-                SearchPaths.Add(targetAssemblyPath.Directory);
                 
                 // Track this as a target assembly
                 TargetAssemblyNames.Add(assemblyToStub.GetName().Name);
-
-                if (searchPaths != null)
-                    foreach (var path in SearchPaths)
-                        SearchPaths.Add(path);
 
                 Console.WriteLine($"Generating Assembly: {assemblyToStub.FullName}");
                 foreach (var exportedType in assemblyToStub.GetExportedTypes())
