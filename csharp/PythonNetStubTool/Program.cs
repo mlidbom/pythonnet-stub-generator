@@ -16,7 +16,7 @@ namespace PythonNetStubTool
 
             Option<string> targetDllsOption = new("--target-dlls")
             {
-                Description = "Target DLLs.",
+                Description = "Target DLLs, separated by commas.",
                 Required = true
             };
 
@@ -33,11 +33,18 @@ namespace PythonNetStubTool
                 Required = false
             };
 
+            Option<bool> addStubSuffixOption = new("--add-stubs-suffix")
+            {
+                Description = "Add a '-stubs' suffix to generated stub folders (for Pycharm).",
+                Required = false
+            };
+
             RootCommand rootCommand = new("PythonNet Stub Generator Tool");
             rootCommand.Options.Add(destPathOption);
             rootCommand.Options.Add(targetDllsOption);
             rootCommand.Options.Add(searchPathsOption);
             rootCommand.Options.Add(onlyTargetTypesOption);
+            rootCommand.Options.Add(addStubSuffixOption);
 
             rootCommand.SetAction(parseResult =>
             {
@@ -45,8 +52,8 @@ namespace PythonNetStubTool
                 string targetDlls = parseResult.GetValue(targetDllsOption)!;
                 DirectoryInfo[]? searchPaths = parseResult.GetValue(searchPathsOption);
                 bool onlyTargetTypes = parseResult.GetValue(onlyTargetTypesOption);
-
-                return Run(destPath, targetDlls, searchPaths, onlyTargetTypes);
+                bool addStubSuffix = parseResult.GetValue(addStubSuffixOption);
+                return Run(destPath, targetDlls, searchPaths, onlyTargetTypes, addStubSuffix);
             });
 
             ParseResult parseResult = rootCommand.Parse(args);
@@ -58,12 +65,13 @@ namespace PythonNetStubTool
         /// </summary>
         /// <param name="destPath">Path to save the subs to.</param>
         /// <param name="searchPaths">Path to search for referenced assemblies</param>
-        /// <param name="targetDlls">Target DLLsz</param>
+        /// <param name="targetDlls">Target DLLs, separated by commas.</param>
         static int Run(
             DirectoryInfo destPath,
             string targetDlls,
             DirectoryInfo[]? searchPaths = null,
-            bool onlyTargetTypes = false
+            bool onlyTargetTypes = false,
+            bool addStubSuffix = false
             )
         {
             if (searchPaths != null)
@@ -75,21 +83,20 @@ namespace PythonNetStubTool
             var infos = new List<FileInfo>();
             foreach (var pathStr in targetDlls.Split(','))
             {
-                var assemblyPath = new FileInfo(pathStr);
+                var assemblyPath = new FileInfo(pathStr.Trim());
                 if (!assemblyPath.Exists)
                 {
                     Console.WriteLine($"error: can not find {assemblyPath}");
                     return -1;
                 }
                 infos.Add(assemblyPath);
-
             }
 
             Console.WriteLine($"building stubs...");
 
             try
             {
-                var dest = StaticStubBuilder.BuildAssemblyStubs(destPath, infos.ToArray(), searchPaths, onlyTargetTypes);
+                var dest = StaticStubBuilder.BuildAssemblyStubs(destPath, infos.ToArray(), searchPaths, onlyTargetTypes, addStubSuffix);
                 Console.WriteLine($"stubs saved to {dest}");
                 return 0;
             }

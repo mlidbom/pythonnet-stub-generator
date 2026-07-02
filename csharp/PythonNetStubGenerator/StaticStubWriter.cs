@@ -27,7 +27,6 @@ namespace PythonNetStubGenerator
             {
                 foreach (var typeGroup in typeGroups)
                     WriteTypeGroup(sb, typeGroup.Key, typeGroup);
-
             }
             var body = sb.ToString();
 
@@ -238,16 +237,12 @@ namespace PythonNetStubGenerator
 
             var className = classNameOverride ?? type.CleanName();
 
-
-
             var typeArguments = new List<Type>();
 
             if (type.IsGenericTypeDefinition)
             {
                 typeArguments.AddRange(type.GetGenericArguments());
             }
-
-
 
             using (var classScope = new StaticClassScope(className, typeArguments, typeArguments.Any()))
             {
@@ -979,7 +974,7 @@ namespace PythonNetStubGenerator
 
         private static string GetParameters(MethodBase method, bool includeSelf)
         {
-            string GetParameter(ParameterInfo it)
+            static string GetParameter(ParameterInfo it)
             {
                 var name = StaticPythonTypes.SafePythonName(it.Name);
                 var type = it.ParameterType.ToPythonType();

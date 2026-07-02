@@ -11,7 +11,12 @@ namespace PythonNetStubGenerator
         private static HashSet<DirectoryInfo> SearchPaths { get; } = new HashSet<DirectoryInfo>();
         private static HashSet<string> TargetAssemblyNames { get; } = new HashSet<string>();
 
-        public static DirectoryInfo BuildAssemblyStubs(DirectoryInfo destPath, FileInfo[] targetAssemblyPaths, DirectoryInfo[] searchPaths = null, bool onlyTargetTypes = false)
+        public static DirectoryInfo BuildAssemblyStubs(
+            DirectoryInfo destPath, 
+            FileInfo[] targetAssemblyPaths, 
+            DirectoryInfo[] searchPaths = null, 
+            bool onlyTargetTypes = false,
+            bool addStubSuffix = false)
         {
             // prepare resolver
             AppDomain.CurrentDomain.AssemblyResolve -= AssemblyResolve;
@@ -87,14 +92,18 @@ namespace PythonNetStubGenerator
                     typesToGenerate = types.ToList();
                 }
                 
-                WriteStub(destPath, nameSpace, typesToGenerate);
+                WriteStub(destPath, nameSpace, typesToGenerate, addStubSuffix);
             }
 
 
             return destPath;
         }
 
-        internal static void WriteStub(DirectoryInfo rootDirectory, string nameSpace, IEnumerable<Type> stubTypes)
+        internal static void WriteStub(
+            DirectoryInfo rootDirectory, 
+            string nameSpace, 
+            IEnumerable<Type> stubTypes, 
+            bool addStubSuffix)
         {
             // sort the stub list so we get consistent output over time
             var orderedTypes = stubTypes.OrderBy(it => it.Name);
@@ -107,14 +116,20 @@ namespace PythonNetStubGenerator
             }
             else
             {
-                var split = nameSpace.Split('.');
+                var parts = nameSpace.Split('.');
 
-                if (split[0] == "global_")
+                if (parts[0] == "global_")
                 {
                     throw new InvalidDataException("The namespace \"global_\" is reserved.");
                 }
 
-                path = split.Aggregate(rootDirectory.FullName, Path.Combine);
+                // add "-stubs" suffix to module directory
+                if (addStubSuffix)
+                {
+                    parts[0] += "-stubs";
+                }
+
+                path = parts.Aggregate(rootDirectory.FullName, Path.Combine);
             }
 
             if (!Directory.Exists(path))
@@ -125,7 +140,6 @@ namespace PythonNetStubGenerator
             StaticPythonTypes.ClearCurrent();
 
             var stubText = StaticStubWriter.GetStub(nameSpace, orderedTypes);
-
 
             File.WriteAllText(path, stubText);
         }
