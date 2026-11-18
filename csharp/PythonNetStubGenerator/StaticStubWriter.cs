@@ -16,6 +16,7 @@ namespace PythonNetStubGenerator
             var typeGroups = types
                 .Where(it => it.IsVisible) // Avoid internal classes
                 .Where(it => it.DeclaringType == null) // Avoid Nested classes, they're handled later
+                .Where(it => it.HasAPythonName()) // Avoid the types only the compiler names
                 .GroupBy(it => it.NonGenericName())
                 .OrderBy(it => it.Key).ToList();
 
@@ -312,6 +313,7 @@ namespace PythonNetStubGenerator
         private static bool WriteNestedTypes(StringBuilder sb, Type stubType)
         {
             var nestedTypeGroups = stubType.GetNestedTypes(BindingFlags.Public | BindingFlags.Static)
+                .Where(it => it.HasAPythonName()) // Avoid the types only the compiler names, such as an extension block's
                 .OrderBy(it => it.Name)
                 .GroupBy(it => it.NonGenericName());
 

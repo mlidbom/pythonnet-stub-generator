@@ -134,6 +134,19 @@ namespace PythonNetStubGenerator
             return name;
         }
 
+        /// <summary>
+        /// Whether the type's name is one Python can hold: false for the types only the compiler names, with characters no<br/>
+        /// identifier has, such as the <c>&lt;G&gt;$…</c> and <c>&lt;M&gt;$…</c> types of a C# 14 extension block. Written into a stub,<br/>
+        /// such a class is a syntax error that loses every type of that stub.
+        /// </summary>
+        public static bool HasAPythonName(this Type t)
+        {
+            var name = t.CleanName();
+            return name.Length > 0
+                   && (char.IsLetter(name[0]) || name[0] == '_')
+                   && name.All(it => char.IsLetterOrDigit(it) || it == '_');
+        }
+
         public static string CleanName(this MethodBase t)
         {
             var name = t.NonGenericName();
